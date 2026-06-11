@@ -17,13 +17,35 @@ import RenderHTML from "react-native-render-html";
 import { api, type JobDetail, type ReviewsResponse } from "../lib/api";
 import { OutreachModal } from "./OutreachModal";
 import { Avatar } from "./Avatar";
-import { colors, space, radius, font, shadow } from "../theme";
+import { space, radius, font, shadow } from "../theme";
+import { useTheme } from "../context/ThemeContext";
 
-function Stars({ value, size = 16 }: { value: number; size?: number }) {
+function Stars({
+  value,
+  size = 16,
+  theme,
+}: {
+  value: number;
+  size?: number;
+  theme: any;
+}) {
   return (
-    <Text style={{ fontSize: size, color: colors.star, letterSpacing: 1 }}>
+    <Text
+      style={{
+        fontSize: size,
+        color: "#FBBF24",
+        letterSpacing: 1,
+      }}
+    >
       {"★★★★★".slice(0, value)}
-      <Text style={{ color: colors.separator }}>{"★★★★★".slice(value)}</Text>
+
+      <Text
+        style={{
+          color: theme.border,
+        }}
+      >
+        {"★★★★★".slice(value)}
+      </Text>
     </Text>
   );
 }
@@ -37,6 +59,8 @@ export function JobDetailModal({
   visible: boolean;
   onClose: () => void;
 }) {
+  const { theme } = useTheme();
+  const s = createStyles(theme);
   const { width } = useWindowDimensions();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [reviews, setReviews] = useState<ReviewsResponse | null>(null);
@@ -117,20 +141,28 @@ export function JobDetailModal({
 
         {loading || !job ? (
           <View style={s.center}>
-            <ActivityIndicator size="large" color={colors.accent} />
+            <ActivityIndicator size="large" color={theme.primary} />
           </View>
         ) : (
           <ScrollView contentContainerStyle={s.scroll}>
             {/* Title block */}
             <View style={s.titleRow}>
-              <Avatar name={job.company} logoUrl={job.companyLogoUrl} size={52} />
+              <Avatar
+                name={job.company}
+                logoUrl={job.companyLogoUrl}
+                size={52}
+              />
               <Text style={s.company}>{job.company}</Text>
             </View>
             <Text style={s.title}>{job.title}</Text>
-            {job.location ? <Text style={s.meta}>📍 {job.location}</Text> : null}
+            {job.location ? (
+              <Text style={s.meta}>📍 {job.location}</Text>
+            ) : null}
             <View style={s.chipRow}>
               {job.employmentType ? (
-                <Text style={s.chip}>{job.employmentType.replace("_", " ")}</Text>
+                <Text style={s.chip}>
+                  {job.employmentType.replace("_", " ")}
+                </Text>
               ) : null}
               {job.remote ? <Text style={s.chip}>Remote</Text> : null}
             </View>
@@ -160,7 +192,9 @@ export function JobDetailModal({
                   <Text style={s.recruiterEmail}>{recruiter.email}</Text>
                 </>
               ) : (
-                <Text style={s.recruiterEmpty}>No recruiter contact on file yet.</Text>
+                <Text style={s.recruiterEmpty}>
+                  No recruiter contact on file yet.
+                </Text>
               )}
               <TouchableOpacity
                 style={[s.reachBtn, !recruiter?.email && s.reachBtnMuted]}
@@ -178,7 +212,7 @@ export function JobDetailModal({
                   contentWidth={width - 64}
                   source={{ html: job.descriptionHtml }}
                   baseStyle={s.descText}
-                  tagsStyles={htmlTagStyles}
+                  tagsStyles={htmlTagStyles(theme)}
                 />
               ) : (
                 <Text style={s.recruiterEmpty}>No description provided.</Text>
@@ -198,14 +232,16 @@ export function JobDetailModal({
               <View style={s.starsPickerRow}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <Pressable key={n} onPress={() => setRating(n)} hitSlop={6}>
-                    <Text style={[s.pickStar, n <= rating && s.pickStarOn]}>★</Text>
+                    <Text style={[s.pickStar, n <= rating && s.pickStarOn]}>
+                      ★
+                    </Text>
                   </Pressable>
                 ))}
               </View>
               <TextInput
                 style={s.input}
                 placeholder="Title (optional)"
-                placeholderTextColor={colors.tertiary}
+                placeholderTextColor={theme.secondaryText}
                 value={title}
                 onChangeText={setTitle}
                 maxLength={120}
@@ -213,7 +249,7 @@ export function JobDetailModal({
               <TextInput
                 style={[s.input, s.inputMultiline]}
                 placeholder="Share your experience (optional)"
-                placeholderTextColor={colors.tertiary}
+                placeholderTextColor={theme.secondaryText}
                 value={body}
                 onChangeText={setBody}
                 multiline
@@ -236,13 +272,19 @@ export function JobDetailModal({
             {reviews?.reviews.map((r) => (
               <View key={r.id} style={s.reviewCard}>
                 <View style={s.reviewHead}>
-                  <Stars value={r.rating} />
+                  <Stars value={r.rating} theme={theme} />
                   <Text style={s.badge}>
-                    {r.source === "glassdoor" ? "Glassdoor" : r.isMine ? "You" : "SwipeHire"}
+                    {r.source === "glassdoor"
+                      ? "Glassdoor"
+                      : r.isMine
+                        ? "You"
+                        : "SwipeHire"}
                   </Text>
                 </View>
                 {r.title ? <Text style={s.reviewTitle}>{r.title}</Text> : null}
-                {r.authorTitle ? <Text style={s.reviewAuthor}>{r.authorTitle}</Text> : null}
+                {r.authorTitle ? (
+                  <Text style={s.reviewAuthor}>{r.authorTitle}</Text>
+                ) : null}
                 {r.body ? <Text style={s.reviewBody}>{r.body}</Text> : null}
                 {r.pros ? <Text style={s.pros}>＋ {r.pros}</Text> : null}
                 {r.cons ? <Text style={s.cons}>－ {r.cons}</Text> : null}
@@ -263,91 +305,225 @@ export function JobDetailModal({
   );
 }
 
-const htmlTagStyles = {
-  p: { marginBottom: 10, fontSize: 15, lineHeight: 22, color: colors.secondary },
-  li: { marginBottom: 6, fontSize: 15, lineHeight: 22, color: colors.secondary },
-  strong: { fontWeight: "600" as const, color: colors.label },
-  b: { fontWeight: "600" as const, color: colors.label },
-  h1: { fontSize: 18, fontWeight: "700" as const, marginVertical: 8, color: colors.label },
-  h2: { fontSize: 16, fontWeight: "700" as const, marginVertical: 8, color: colors.label },
-  h3: { fontSize: 15, fontWeight: "700" as const, marginVertical: 6, color: colors.label },
-  a: { color: colors.accent },
-};
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingHorizontal: space.xl,
-    paddingTop: 56,
-    paddingBottom: space.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
+const htmlTagStyles = (theme: any) => ({
+  p: {
+    marginBottom: 10,
+    fontSize: 15,
+    lineHeight: 22,
+    color: theme.secondaryText,
   },
-  headerTitle: { ...font.headline, flex: 1, color: colors.label },
-  closeBtn: { paddingVertical: 6, paddingRight: 6 },
-  close: { ...font.body, color: colors.accent, fontWeight: "600" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  scroll: { padding: space.lg },
-
-  titleRow: { flexDirection: "row", alignItems: "center", gap: space.md, marginBottom: space.md },
-  company: { ...font.footnote, fontWeight: "700", color: colors.accent, textTransform: "uppercase", letterSpacing: 0.6, flex: 1 },
-  title: { ...font.title1, color: colors.label, marginTop: space.xs, marginBottom: space.sm },
-  meta: { ...font.subhead, color: colors.secondary, marginBottom: space.md },
-  chipRow: { flexDirection: "row", gap: space.sm, marginBottom: space.lg, flexWrap: "wrap" },
-  chip: {
-    ...font.caption, fontWeight: "600", color: colors.secondary, backgroundColor: colors.background,
-    paddingHorizontal: space.md, paddingVertical: 5, borderRadius: radius.pill, textTransform: "capitalize",
-    overflow: "hidden",
+  li: {
+    marginBottom: 6,
+    fontSize: 15,
+    lineHeight: 22,
+    color: theme.secondaryText,
   },
-
-  salaryCard: {
-    backgroundColor: colors.successSoft, borderRadius: radius.md, padding: space.lg, marginBottom: space.md,
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+  strong: { fontWeight: "600" as const, color: theme.text },
+  b: { fontWeight: "600" as const, color: theme.text },
+  h1: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    marginVertical: 8,
+    color: theme.text,
   },
-  salaryLabel: { ...font.subhead, fontWeight: "600", color: colors.success },
-  salaryValue: { ...font.headline, color: "#1E7A3D", flexShrink: 1, textAlign: "right" },
-
-  applyButton: { backgroundColor: colors.accent, paddingVertical: 14, borderRadius: radius.md, alignItems: "center" },
-  applyButtonText: { ...font.headline, color: colors.inverse },
-
-  sectionTitle: { ...font.title3, color: colors.label, marginTop: space.xxl, marginBottom: space.md },
-
-  recruiterCard: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, gap: space.xs, ...shadow.card },
-  recruiterName: { ...font.callout, fontWeight: "600", color: colors.label },
-  recruiterEmail: { ...font.subhead, color: colors.accent },
-  recruiterEmpty: { ...font.subhead, color: colors.tertiary },
-  reachBtn: { backgroundColor: colors.accentSoft, paddingVertical: 12, borderRadius: radius.sm, alignItems: "center", marginTop: space.md },
-  reachBtnMuted: { backgroundColor: colors.background },
-  reachBtnText: { ...font.subhead, color: colors.accent, fontWeight: "600" },
-
-  descCard: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, ...shadow.card },
-  descText: { ...font.subhead, lineHeight: 22, color: colors.secondary },
-
-  composeCard: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, gap: space.md, ...shadow.card },
-  composeTitle: { ...font.headline, color: colors.label },
-  starsPickerRow: { flexDirection: "row", gap: space.sm },
-  pickStar: { fontSize: 36, color: colors.separator },
-  pickStarOn: { color: colors.star },
-  input: {
-    backgroundColor: colors.background, borderRadius: radius.sm, paddingHorizontal: space.md, paddingVertical: 12,
-    fontSize: 15, color: colors.label,
+  h2: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    marginVertical: 8,
+    color: theme.text,
   },
-  inputMultiline: { minHeight: 90, textAlignVertical: "top" },
-  submitBtn: { backgroundColor: colors.accent, paddingVertical: 13, borderRadius: radius.sm, alignItems: "center" },
-  submitBtnText: { ...font.subhead, color: colors.inverse, fontWeight: "600" },
-  btnDisabled: { opacity: 0.5 },
-
-  empty: { ...font.subhead, textAlign: "center", color: colors.tertiary, marginTop: space.lg },
-  reviewCard: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, gap: space.sm, marginTop: space.md, ...shadow.card },
-  reviewHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  badge: { ...font.caption, color: colors.tertiary, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
-  reviewTitle: { ...font.callout, fontWeight: "600", color: colors.label },
-  reviewAuthor: { ...font.caption, color: colors.tertiary },
-  reviewBody: { ...font.subhead, color: colors.secondary, lineHeight: 22 },
-  pros: { ...font.footnote, color: colors.success },
-  cons: { ...font.footnote, color: colors.danger },
+  h3: {
+    fontSize: 15,
+    fontWeight: "700" as const,
+    marginVertical: 6,
+    color: theme.text,
+  },
+  a: { color: theme.primary },
 });
+
+const createStyles = (theme: any) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: space.md,
+      paddingHorizontal: space.xl,
+      paddingTop: 56,
+      paddingBottom: space.md,
+      backgroundColor: theme.card,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+    },
+    headerTitle: { ...font.headline, flex: 1, color: theme.text },
+    closeBtn: { paddingVertical: 6, paddingRight: 6 },
+    close: { ...font.body, color: theme.primary, fontWeight: "600" },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    scroll: { padding: space.lg },
+
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: space.md,
+      marginBottom: space.md,
+    },
+    company: {
+      ...font.footnote,
+      fontWeight: "700",
+      color: theme.primary,
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      flex: 1,
+    },
+    title: {
+      ...font.title1,
+      color: theme.text,
+      marginTop: space.xs,
+      marginBottom: space.sm,
+    },
+    meta: {
+      ...font.subhead,
+      color: theme.secondaryText,
+      marginBottom: space.md,
+    },
+    chipRow: {
+      flexDirection: "row",
+      gap: space.sm,
+      marginBottom: space.lg,
+      flexWrap: "wrap",
+    },
+    chip: {
+      ...font.caption,
+      fontWeight: "600",
+      color: theme.secondaryText,
+      backgroundColor: theme.background,
+      paddingHorizontal: space.md,
+      paddingVertical: 5,
+      borderRadius: radius.pill,
+      textTransform: "capitalize",
+      overflow: "hidden",
+    },
+
+    salaryCard: {
+      backgroundColor: theme.mode === "dark" ? "#16331D" : "#DCFCE7",
+      borderRadius: radius.md,
+      padding: space.lg,
+      marginBottom: space.md,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    salaryLabel: { ...font.subhead, fontWeight: "600", color: "#22C55E" },
+    salaryValue: {
+      ...font.headline,
+      color: theme.mode === "dark" ? "#86EFAC" : "#1E7A3D",
+      flexShrink: 1,
+      textAlign: "right",
+    },
+
+    applyButton: {
+      backgroundColor: theme.primary,
+      paddingVertical: 14,
+      borderRadius: radius.md,
+      alignItems: "center",
+    },
+    applyButtonText: { ...font.headline, color: "#FFF" },
+
+    sectionTitle: {
+      ...font.title3,
+      color: theme.text,
+      marginTop: space.xxl,
+      marginBottom: space.md,
+    },
+
+    recruiterCard: {
+      backgroundColor: theme.card,
+      borderRadius: radius.md,
+      padding: space.lg,
+      gap: space.xs,
+      ...shadow.card,
+    },
+    recruiterName: { ...font.callout, fontWeight: "600", color: theme.text },
+    recruiterEmail: { ...font.subhead, color: theme.primary },
+    recruiterEmpty: { ...font.subhead, color: theme.secondaryText },
+    reachBtn: {
+      backgroundColor: theme.mode === "dark" ? "#172554" : "#DBEAFE",
+      paddingVertical: 12,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      marginTop: space.md,
+    },
+    reachBtnMuted: { backgroundColor: theme.background },
+    reachBtnText: { ...font.subhead, color: theme.primary, fontWeight: "600" },
+
+    descCard: {
+      backgroundColor: theme.card,
+      borderRadius: radius.md,
+      padding: space.lg,
+      ...shadow.card,
+    },
+    descText: { ...font.subhead, lineHeight: 22, color: theme.secondaryText },
+
+    composeCard: {
+      backgroundColor: theme.card,
+      borderRadius: radius.md,
+      padding: space.lg,
+      gap: space.md,
+      ...shadow.card,
+    },
+    composeTitle: { ...font.headline, color: theme.text },
+    starsPickerRow: { flexDirection: "row", gap: space.sm },
+    pickStar: { fontSize: 36, color: theme.border },
+    pickStarOn: { color: "#FBBF24" },
+    input: {
+      backgroundColor: theme.background,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: radius.sm,
+      paddingHorizontal: space.md,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: theme.text,
+    },
+    inputMultiline: { minHeight: 90, textAlignVertical: "top" },
+    submitBtn: {
+      backgroundColor: theme.primary,
+      paddingVertical: 13,
+      borderRadius: radius.sm,
+      alignItems: "center",
+    },
+    submitBtnText: { ...font.subhead, color: "#fff", fontWeight: "600" },
+    btnDisabled: { opacity: 0.5 },
+
+    empty: {
+      ...font.subhead,
+      textAlign: "center",
+      color: theme.secondaryText,
+      marginTop: space.lg,
+    },
+    reviewCard: {
+      backgroundColor: theme.card,
+      borderRadius: radius.md,
+      padding: space.lg,
+      gap: space.sm,
+      marginTop: space.md,
+      ...shadow.card,
+    },
+    reviewHead: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    badge: {
+      ...font.caption,
+      color: theme.secondaryText,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    reviewTitle: { ...font.callout, fontWeight: "600", color: theme.text },
+    reviewAuthor: { ...font.caption, color: theme.secondaryText },
+    reviewBody: { ...font.subhead, color: theme.secondaryText, lineHeight: 22 },
+    pros: { ...font.footnote, color: "#22C55E" },
+    cons: { ...font.footnote, color: theme.danger },
+  });

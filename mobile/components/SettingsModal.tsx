@@ -10,7 +10,9 @@ import {
   Alert,
 } from "react-native";
 import { api, type User } from "../lib/api";
-import { colors, space, radius, font, shadow } from "../theme";
+import { space, radius, font, shadow } from "../theme";
+import { useTheme } from "../context/ThemeContext";
+import { Switch } from "react-native";
 
 export function SettingsModal({
   visible,
@@ -25,6 +27,8 @@ export function SettingsModal({
   onEmailChanged: (user: User) => void;
   onSignOut: () => void | Promise<void>;
 }) {
+  const { theme, themeMode, toggleTheme } = useTheme();
+  const s = createStyles(theme);
   const [newEmail, setNewEmail] = useState("");
   const [emailPassword, setEmailPassword] = useState("");
   const [currentPw, setCurrentPw] = useState("");
@@ -46,8 +50,8 @@ export function SettingsModal({
         .getResume()
         .then((r) =>
           setResumeStatus(
-            r.hasResume ? `Resume on file · ${r.keywordCount} keywords` : null
-          )
+            r.hasResume ? `Resume on file · ${r.keywordCount} keywords` : null,
+          ),
         )
         .catch(() => setResumeStatus(null));
     }
@@ -55,7 +59,10 @@ export function SettingsModal({
 
   async function saveResume() {
     if (resumeText.trim().length < 50) {
-      Alert.alert("Resume too short", "Paste your full resume text (at least 50 characters).");
+      Alert.alert(
+        "Resume too short",
+        "Paste your full resume text (at least 50 characters).",
+      );
       return;
     }
     setSavingResume(true);
@@ -65,7 +72,7 @@ export function SettingsModal({
       setResumeText("");
       Alert.alert(
         "Resume scanned",
-        `Extracted ${res.keywordCount} keywords. Your feed is now matched against your resume.`
+        `Extracted ${res.keywordCount} keywords. Your feed is now matched against your resume.`,
       );
     } catch (err: any) {
       Alert.alert("Couldn't save resume", err.message);
@@ -95,7 +102,10 @@ export function SettingsModal({
 
   async function savePassword() {
     if (!currentPw || newPw.length < 8) {
-      Alert.alert("Check your input", "New password must be at least 8 characters.");
+      Alert.alert(
+        "Check your input",
+        "New password must be at least 8 characters.",
+      );
       return;
     }
     setSavingPw(true);
@@ -103,7 +113,10 @@ export function SettingsModal({
       await api.updatePassword(currentPw, newPw);
       setCurrentPw("");
       setNewPw("");
-      Alert.alert("Password changed", "Use your new password next time you log in.");
+      Alert.alert(
+        "Password changed",
+        "Use your new password next time you log in.",
+      );
     } catch (err: any) {
       Alert.alert("Couldn't change password", err.message);
     } finally {
@@ -130,10 +143,10 @@ export function SettingsModal({
             await onSignOut();
           },
         },
-      ]
+      ],
     );
   }
-
+  //dark mode toggle UI
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={s.container}>
@@ -144,22 +157,52 @@ export function SettingsModal({
           <Text style={s.title}>Account</Text>
         </View>
 
-        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={s.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={s.signedInLabel}>Signed in as</Text>
           <Text style={s.signedInEmail}>{email}</Text>
+
+          <Text style={s.section}>Appearance</Text>
+
+          <View style={s.card}>
+            <View style={s.themeRow}>
+              <View>
+                <Text style={s.themeTitle}>Dark mode</Text>
+
+                <Text style={s.themeSub}>
+                  Switch between light and dark theme
+                </Text>
+              </View>
+
+              <Switch
+                value={themeMode === "dark"}
+                onValueChange={toggleTheme}
+                trackColor={{
+                  false: "#D1D5DB",
+                  true: theme.primary,
+                }}
+                thumbColor="#fff"
+              />
+            </View>
+          </View>
 
           {/* Resume (powers SmartFeed's scanner layer) */}
           <Text style={s.section}>Resume</Text>
           <View style={s.card}>
-            {resumeStatus ? <Text style={s.resumeStatus}>✓ {resumeStatus}</Text> : (
+            {resumeStatus ? (
+              <Text style={s.resumeStatus}>✓ {resumeStatus}</Text>
+            ) : (
               <Text style={s.resumeHint}>
-                Paste your resume and we'll match jobs against it. Your swipes refine it from there.
+                Paste your resume and we'll match jobs against it. Your swipes
+                refine it from there.
               </Text>
             )}
             <TextInput
               style={[s.input, s.resumeInput]}
               placeholder="Paste your resume text here…"
-              placeholderTextColor={colors.tertiary}
+              placeholderTextColor={theme.secondaryText}
               value={resumeText}
               onChangeText={setResumeText}
               multiline
@@ -170,7 +213,11 @@ export function SettingsModal({
               disabled={savingResume}
             >
               <Text style={s.primaryBtnText}>
-                {savingResume ? "Scanning…" : resumeStatus ? "Replace resume" : "Scan resume"}
+                {savingResume
+                  ? "Scanning…"
+                  : resumeStatus
+                    ? "Replace resume"
+                    : "Scan resume"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -181,7 +228,7 @@ export function SettingsModal({
             <TextInput
               style={s.input}
               placeholder="New email"
-              placeholderTextColor={colors.tertiary}
+              placeholderTextColor={theme.secondaryText}
               value={newEmail}
               onChangeText={setNewEmail}
               autoCapitalize="none"
@@ -191,7 +238,7 @@ export function SettingsModal({
             <TextInput
               style={s.input}
               placeholder="Current password"
-              placeholderTextColor={colors.tertiary}
+              placeholderTextColor={theme.secondaryText}
               value={emailPassword}
               onChangeText={setEmailPassword}
               secureTextEntry
@@ -201,7 +248,9 @@ export function SettingsModal({
               onPress={saveEmail}
               disabled={savingEmail}
             >
-              <Text style={s.primaryBtnText}>{savingEmail ? "Updating…" : "Update email"}</Text>
+              <Text style={s.primaryBtnText}>
+                {savingEmail ? "Updating…" : "Update email"}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -211,7 +260,7 @@ export function SettingsModal({
             <TextInput
               style={s.input}
               placeholder="Current password"
-              placeholderTextColor={colors.tertiary}
+              placeholderTextColor={theme.secondaryText}
               value={currentPw}
               onChangeText={setCurrentPw}
               secureTextEntry
@@ -219,7 +268,7 @@ export function SettingsModal({
             <TextInput
               style={s.input}
               placeholder="New password (min 8 characters)"
-              placeholderTextColor={colors.tertiary}
+              placeholderTextColor={theme.secondaryText}
               value={newPw}
               onChangeText={setNewPw}
               secureTextEntry
@@ -229,7 +278,9 @@ export function SettingsModal({
               onPress={savePassword}
               disabled={savingPw}
             >
-              <Text style={s.primaryBtnText}>{savingPw ? "Saving…" : "Change password"}</Text>
+              <Text style={s.primaryBtnText}>
+                {savingPw ? "Saving…" : "Change password"}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -246,38 +297,93 @@ export function SettingsModal({
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingHorizontal: space.xl,
-    paddingTop: 56,
-    paddingBottom: space.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
-  title: { ...font.title3, color: colors.label, flex: 1 },
-  close: { ...font.body, color: colors.accent, fontWeight: "600" },
-  scroll: { padding: space.lg },
-  signedInLabel: { ...font.caption, color: colors.tertiary, textTransform: "uppercase", fontWeight: "700", letterSpacing: 0.4 },
-  signedInEmail: { ...font.headline, color: colors.label, marginTop: 2 },
-  section: { ...font.footnote, fontWeight: "600", color: colors.secondary, textTransform: "uppercase", letterSpacing: 0.4, marginTop: space.xxl, marginBottom: space.sm },
-  card: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, gap: space.sm, ...shadow.card },
-  resumeStatus: { ...font.footnote, color: colors.success, fontWeight: "600" },
-  resumeHint: { ...font.footnote, color: colors.secondary, lineHeight: 18 },
-  resumeInput: { minHeight: 120, textAlignVertical: "top" },
-  input: {
-    backgroundColor: colors.background, borderRadius: radius.sm,
-    paddingHorizontal: space.md, paddingVertical: 12, fontSize: 15, color: colors.label,
-  },
-  primaryBtn: { backgroundColor: colors.accent, paddingVertical: 13, borderRadius: radius.sm, alignItems: "center", marginTop: space.xs },
-  primaryBtnText: { ...font.subhead, color: colors.inverse, fontWeight: "600" },
-  btnDisabled: { opacity: 0.5 },
-  logoutBtn: { backgroundColor: colors.surface, paddingVertical: 14, borderRadius: radius.md, alignItems: "center", marginTop: space.xxl, ...shadow.card },
-  logoutText: { ...font.headline, color: colors.accent },
-  deleteBtn: { paddingVertical: 14, alignItems: "center", marginTop: space.sm },
-  deleteText: { ...font.subhead, color: colors.danger, fontWeight: "600" },
-});
+const createStyles = (theme: any) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: space.md,
+      paddingHorizontal: space.xl,
+      paddingTop: 56,
+      paddingBottom: space.md,
+      backgroundColor: theme.card,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+    },
+    title: { ...font.title3, color: theme.text, flex: 1 },
+    close: { ...font.body, color: theme.primary, fontWeight: "600" },
+    scroll: { padding: space.lg },
+    signedInLabel: {
+      ...font.caption,
+      color: theme.secondaryText,
+      textTransform: "uppercase",
+      fontWeight: "700",
+      letterSpacing: 0.4,
+    },
+    signedInEmail: { ...font.headline, color: theme.text, marginTop: 2 },
+    section: {
+      ...font.footnote,
+      fontWeight: "600",
+      color: theme.secondaryText,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      marginTop: space.xxl,
+      marginBottom: space.sm,
+    },
+    card: {
+      backgroundColor: theme.card,
+      borderRadius: radius.md,
+      padding: space.lg,
+      gap: space.sm,
+      ...shadow.card,
+    },
+    resumeStatus: { ...font.footnote, color: "#22C55E", fontWeight: "600" },
+    resumeHint: {
+      ...font.footnote,
+      color: theme.secondaryText,
+      lineHeight: 18,
+    },
+    resumeInput: { minHeight: 120, textAlignVertical: "top" },
+    input: {
+      backgroundColor: theme.background,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: radius.sm,
+      paddingHorizontal: space.md,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: theme.text,
+    },
+    primaryBtn: {
+      backgroundColor: theme.primary,
+      paddingVertical: 13,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      marginTop: space.xs,
+    },
+    primaryBtnText: { ...font.subhead, color: "#fff", fontWeight: "600" },
+    btnDisabled: { opacity: 0.5 },
+    logoutBtn: {
+      backgroundColor: theme.card,
+      paddingVertical: 14,
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginTop: space.xxl,
+      ...shadow.card,
+    },
+    logoutText: { ...font.headline, color: theme.primary },
+    deleteBtn: {
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop: space.sm,
+    },
+    deleteText: { ...font.subhead, color: theme.danger, fontWeight: "600" },
+    themeRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    themeTitle: { ...font.headline, color: theme.text },
+    themeSub: { ...font.footnote, color: theme.secondaryText, marginTop: 2 },
+  });

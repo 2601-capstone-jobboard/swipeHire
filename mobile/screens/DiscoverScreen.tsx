@@ -14,9 +14,15 @@ import RenderHTML from "react-native-render-html";
 import { api, type User, type Job } from "../lib/api";
 import { JobDetailModal } from "../components/JobDetailModal";
 import { Avatar } from "../components/Avatar";
-import { colors, space, radius, font, shadow } from "../theme";
+//import { colors, space, radius, font, shadow } from "../theme";
+//alan
+import { space, radius, font, shadow } from "../theme";
+import { useTheme } from "../context/ThemeContext";
+//alan
 
 export function DiscoverScreen({ user }: { user: User }) {
+  const { theme } = useTheme();
+  const s = createStyles(theme);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,11 +87,10 @@ export function DiscoverScreen({ user }: { user: User }) {
       undoingRef.current = false;
     }, 350);
   }
-
   if (loading && jobs.length === 0) {
     return (
       <SafeAreaView style={s.center}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={theme.primary} />
       </SafeAreaView>
     );
   }
@@ -121,7 +126,11 @@ export function DiscoverScreen({ user }: { user: User }) {
           cards={jobs}
           renderCard={(job) =>
             job ? (
-              <JobCard job={job} onDetails={() => setDetailJobId(job.id)} />
+              <JobCard
+                job={job}
+                theme={theme}
+                onDetails={() => setDetailJobId(job.id)}
+              />
             ) : (
               <View style={s.card} />
             )
@@ -139,12 +148,11 @@ export function DiscoverScreen({ user }: { user: User }) {
           stackSeparation={12}
           animateCardOpacity
           animateOverlayLabelsOpacity
-          overlayLabels={overlayLabels}
+          overlayLabels={getOverlayLabels(theme)}
           verticalSwipe
           disableBottomSwipe
         />
       </View>
-
 
       <JobDetailModal
         jobId={detailJobId}
@@ -155,8 +163,17 @@ export function DiscoverScreen({ user }: { user: User }) {
   );
 }
 
-function JobCard({ job, onDetails }: { job: Job; onDetails: () => void }) {
+function JobCard({
+  job,
+  onDetails,
+  theme,
+}: {
+  job: Job;
+  onDetails: () => void;
+  theme: any;
+}) {
   const { width } = useWindowDimensions();
+  const s = createStyles(theme);
 
   return (
     <View style={s.card}>
@@ -175,7 +192,9 @@ function JobCard({ job, onDetails }: { job: Job; onDetails: () => void }) {
       </View>
       <Text style={s.cardTitle}>{job.title}</Text>
       <View style={s.cardMetaRow}>
-        {job.location ? <Text style={s.cardLocation}>{job.location}</Text> : null}
+        {job.location ? (
+          <Text style={s.cardLocation}>{job.location}</Text>
+        ) : null}
         {job.remote ? (
           <View style={s.remotePill}>
             <Text style={s.remotePillText}>Remote</Text>
@@ -189,18 +208,24 @@ function JobCard({ job, onDetails }: { job: Job; onDetails: () => void }) {
             contentWidth={width - 80}
             source={{ html: job.descriptionText }}
             baseStyle={s.cardDescription}
-            tagsStyles={htmlTagStyles}
+            tagsStyles={htmlTagStyles(theme)}
             defaultTextProps={{ selectable: false }}
           />
         ) : null}
         <View style={s.fade} pointerEvents="none" />
       </View>
 
-      <TouchableOpacity style={s.actionBtn} onPress={onDetails} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={s.actionBtn}
+        onPress={onDetails}
+        activeOpacity={0.7}
+      >
         <Text style={s.actionBtnText}>View details, reviews & salary</Text>
       </TouchableOpacity>
 
-      <Text style={s.cardHint}>Swipe ← pass   ·   save → right   ·   ↑ up for details</Text>
+      <Text style={s.cardHint}>
+        Swipe ← pass · save → right · ↑ up for details
+      </Text>
     </View>
   );
 }
@@ -217,11 +242,16 @@ const stampBase = {
   backgroundColor: "rgba(255,255,255,0.9)",
 };
 
-const overlayLabels = {
+const getOverlayLabels = (theme: any) => ({
   left: {
     title: "PASS",
     style: {
-      label: { ...stampBase, color: colors.danger, borderColor: colors.danger, transform: [{ rotate: "8deg" }] },
+      label: {
+        ...stampBase,
+        color: theme.danger,
+        borderColor: theme.danger,
+        transform: [{ rotate: "8deg" }],
+      },
       wrapper: {
         flexDirection: "column" as const,
         alignItems: "flex-end" as const,
@@ -231,10 +261,16 @@ const overlayLabels = {
       },
     },
   },
+
   right: {
     title: "SAVE",
     style: {
-      label: { ...stampBase, color: colors.success, borderColor: colors.success, transform: [{ rotate: "-8deg" }] },
+      label: {
+        ...stampBase,
+        color: "#22C55E",
+        borderColor: "#22C55E",
+        transform: [{ rotate: "-8deg" }],
+      },
       wrapper: {
         flexDirection: "column" as const,
         alignItems: "flex-start" as const,
@@ -244,10 +280,15 @@ const overlayLabels = {
       },
     },
   },
+
   top: {
     title: "DETAILS",
     style: {
-      label: { ...stampBase, color: colors.accent, borderColor: colors.accent },
+      label: {
+        ...stampBase,
+        color: theme.primary,
+        borderColor: theme.primary,
+      },
       wrapper: {
         flexDirection: "column" as const,
         alignItems: "center" as const,
@@ -255,77 +296,165 @@ const overlayLabels = {
       },
     },
   },
-};
-
-const htmlTagStyles = {
-  p: { marginBottom: 8, fontSize: 15, lineHeight: 22, color: colors.secondary },
-  li: { marginBottom: 4, fontSize: 15, lineHeight: 22, color: colors.secondary },
-  strong: { fontWeight: "600" as const, color: colors.label },
-  b: { fontWeight: "600" as const, color: colors.label },
-  h1: { fontSize: 16, fontWeight: "700" as const, marginVertical: 6, color: colors.label },
-  h2: { fontSize: 15, fontWeight: "700" as const, marginVertical: 6, color: colors.label },
-  h3: { fontSize: 14, fontWeight: "700" as const, marginVertical: 4, color: colors.label },
-  a: { color: colors.accent },
-  div: { marginBottom: 4 },
-};
-
-const s = StyleSheet.create({
-  deckContainer: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background, padding: space.xxl },
-  emptyEmoji: { fontSize: 44, marginBottom: space.md },
-  emptyTitle: { ...font.title2, color: colors.label, marginBottom: space.xs },
-  emptySubtitle: { ...font.subhead, color: colors.secondary, textAlign: "center" },
-
-  deck: { flex: 1 },
-  card: {
-    height: "86%",
-    borderRadius: radius.xl,
-    backgroundColor: colors.surface,
-    padding: space.xxl,
-    ...shadow.card,
-  },
-  cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: space.md, marginBottom: space.lg },
-  cardHeaderText: { flex: 1, gap: 2 },
-  cardCompany: {
-    ...font.footnote,
-    fontWeight: "700",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  cardRating: { ...font.footnote, color: colors.secondary, fontWeight: "600" },
-  cardRatingStar: { color: colors.star },
-  cardTitle: { ...font.title1, color: colors.label, marginBottom: space.md },
-  cardMetaRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginBottom: space.lg },
-  cardLocation: { ...font.subhead, color: colors.secondary },
-  remotePill: { backgroundColor: colors.successSoft, paddingHorizontal: space.md, paddingVertical: 3, borderRadius: radius.pill },
-  remotePillText: { ...font.caption, fontWeight: "600", color: colors.success },
-  descriptionContainer: { flex: 1, overflow: "hidden" },
-  cardDescription: { ...font.subhead, color: colors.secondary, lineHeight: 22 },
-  fade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 48 },
-  actionBtn: {
-    backgroundColor: colors.accentSoft,
-    paddingVertical: 13,
-    borderRadius: radius.md,
-    alignItems: "center",
-    marginTop: space.lg,
-  },
-  actionBtnText: { ...font.subhead, color: colors.accent, fontWeight: "600" },
-  cardHint: { ...font.caption, color: colors.tertiary, textAlign: "center", marginTop: space.md },
-
-  topBar: {
-    // Floating overlay so it doesn't push the card deck down.
-    position: "absolute", top: space.sm, left: space.lg, zIndex: 10,
-    flexDirection: "row", alignItems: "center",
-  },
-  undoBtn: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: colors.surface,
-    paddingHorizontal: space.lg, paddingVertical: space.sm,
-    borderRadius: radius.pill,
-    ...shadow.floating,
-  },
-  undoBtnDisabled: { opacity: 0.35 },
-  undoText: { ...font.subhead, fontWeight: "700", color: colors.accent },
-  undoTextDisabled: { color: colors.tertiary },
 });
+
+const htmlTagStyles = (theme: any) => ({
+  p: {
+    marginBottom: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    color: theme.secondaryText,
+  },
+
+  li: {
+    marginBottom: 4,
+    fontSize: 15,
+    lineHeight: 22,
+    color: theme.secondaryText,
+  },
+
+  strong: {
+    fontWeight: "600" as const,
+    color: theme.text,
+  },
+
+  b: {
+    fontWeight: "600" as const,
+    color: theme.text,
+  },
+
+  h1: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    marginVertical: 6,
+    color: theme.text,
+  },
+
+  h2: {
+    fontSize: 15,
+    fontWeight: "700" as const,
+    marginVertical: 6,
+    color: theme.text,
+  },
+
+  h3: {
+    fontSize: 14,
+    fontWeight: "700" as const,
+    marginVertical: 4,
+    color: theme.text,
+  },
+
+  a: {
+    color: theme.primary,
+  },
+
+  div: {
+    marginBottom: 4,
+  },
+});
+
+const createStyles = (theme: any) =>
+  StyleSheet.create({
+    deckContainer: { flex: 1, backgroundColor: theme.background },
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: theme.background,
+      padding: space.xxl,
+    },
+    emptyEmoji: { fontSize: 44, marginBottom: space.md },
+    emptyTitle: { ...font.title2, color: theme.text, marginBottom: space.xs },
+    emptySubtitle: {
+      ...font.subhead,
+      color: theme.secondaryText,
+      textAlign: "center",
+    },
+
+    deck: { flex: 1 },
+    card: {
+      height: "86%",
+      borderRadius: radius.xl,
+      backgroundColor: theme.card,
+      padding: space.xxl,
+      ...shadow.card,
+    },
+    cardHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: space.md,
+      marginBottom: space.lg,
+    },
+    cardHeaderText: { flex: 1, gap: 2 },
+    cardCompany: {
+      ...font.footnote,
+      fontWeight: "700",
+      color: theme.primary,
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+    },
+    cardRating: {
+      ...font.footnote,
+      color: theme.secondaryText,
+      fontWeight: "600",
+    },
+    cardRatingStar: { color: "#FBBF24" },
+    cardTitle: { ...font.title1, color: theme.text, marginBottom: space.md },
+    cardMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: space.sm,
+      marginBottom: space.lg,
+    },
+    cardLocation: { ...font.subhead, color: theme.secondaryText },
+    remotePill: {
+      backgroundColor: theme.mode === "dark" ? "#16331D" : "#DCFCE7",
+      paddingHorizontal: space.md,
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    remotePillText: { ...font.caption, fontWeight: "600", color: "#22C55E" },
+    descriptionContainer: { flex: 1, overflow: "hidden" },
+    cardDescription: {
+      ...font.subhead,
+      color: theme.secondaryText,
+      lineHeight: 22,
+    },
+    fade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 48 },
+    actionBtn: {
+      backgroundColor: theme.primary,
+      paddingVertical: 13,
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginTop: space.lg,
+    },
+    actionBtnText: { ...font.subhead, color: "#fff", fontWeight: "600" },
+    cardHint: {
+      ...font.caption,
+      color: theme.secondaryText,
+      textAlign: "center",
+      marginTop: space.md,
+    },
+
+    topBar: {
+      // Floating overlay so it doesn't push the card deck down.
+      position: "absolute",
+      top: space.sm,
+      left: space.lg,
+      zIndex: 10,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    undoBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.card,
+      paddingHorizontal: space.lg,
+      paddingVertical: space.sm,
+      borderRadius: radius.pill,
+      ...shadow.floating,
+    },
+    undoBtnDisabled: { opacity: 0.35 },
+    undoText: { ...font.subhead, fontWeight: "700", color: theme.primary },
+    undoTextDisabled: { color: theme.secondaryText },
+  });
