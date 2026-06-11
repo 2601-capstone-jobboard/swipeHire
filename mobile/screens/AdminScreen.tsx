@@ -15,9 +15,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api, type AdminCompany } from "../lib/api";
-import { colors, space, radius, font, shadow } from "../theme";
+import { space, radius, font, shadow } from "../theme";
+import { useTheme } from "../context/ThemeContext";
 
 export function AdminScreen() {
+  const { theme } = useTheme();
+  const s = createStyles(theme);
   const [items, setItems] = useState<AdminCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,7 +42,7 @@ export function AdminScreen() {
     useCallback(() => {
       setLoading(true);
       load();
-    }, [load])
+    }, [load]),
   );
 
   function onSaved(updated: AdminCompany) {
@@ -50,7 +53,7 @@ export function AdminScreen() {
   if (loading) {
     return (
       <SafeAreaView style={s.center}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={theme.primary} />
       </SafeAreaView>
     );
   }
@@ -59,8 +62,8 @@ export function AdminScreen() {
     <SafeAreaView style={s.container}>
       <Text style={s.header}>Companies ({items.length})</Text>
       <Text style={s.sub}>
-        Set a website so outreach can reach <Text style={s.mono}>careers@domain</Text>, or set a
-        specific inbox.
+        Set a website so outreach can reach{" "}
+        <Text style={s.mono}>careers@domain</Text>, or set a specific inbox.
       </Text>
       <FlatList
         data={items}
@@ -73,6 +76,7 @@ export function AdminScreen() {
               setRefreshing(true);
               load();
             }}
+            tintColor={theme.primary}
           />
         }
         renderItem={({ item }) => (
@@ -82,24 +86,35 @@ export function AdminScreen() {
               <View
                 style={[s.badge, item.inbox.email ? s.badgeOk : s.badgeMissing]}
               >
-                <Text style={[s.badgeText, item.inbox.email ? s.badgeTextOk : s.badgeTextMissing]}>
+                <Text
+                  style={[
+                    s.badgeText,
+                    item.inbox.email ? s.badgeTextOk : s.badgeTextMissing,
+                  ]}
+                >
                   {item.inbox.kind === "manual"
                     ? "Inbox set"
                     : item.inbox.kind === "careers"
-                    ? "Careers"
-                    : "Needs setup"}
+                      ? "Careers"
+                      : "Needs setup"}
                 </Text>
               </View>
             </View>
             <Text style={s.cardInbox}>
               {item.inbox.email ?? "No domain or inbox — tap to add"}
             </Text>
-            {item.website ? <Text style={s.cardWebsite}>{item.website}</Text> : null}
+            {item.website ? (
+              <Text style={s.cardWebsite}>{item.website}</Text>
+            ) : null}
           </TouchableOpacity>
         )}
       />
 
-      <EditModal company={editing} onClose={() => setEditing(null)} onSaved={onSaved} />
+      <EditModal
+        company={editing}
+        onClose={() => setEditing(null)}
+        onSaved={onSaved}
+      />
     </SafeAreaView>
   );
 }
@@ -113,6 +128,8 @@ function EditModal({
   onClose: () => void;
   onSaved: (c: AdminCompany) => void;
 }) {
+  const { theme } = useTheme();
+  const s = createStyles(theme);
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
@@ -129,7 +146,10 @@ function EditModal({
     if (website.trim()) payload.website = normalizeUrl(website.trim());
     if (email.trim()) payload.email = email.trim();
     if (!payload.website && !payload.email) {
-      Alert.alert("Add something", "Enter a website/domain and/or a specific inbox email.");
+      Alert.alert(
+        "Add something",
+        "Enter a website/domain and/or a specific inbox email.",
+      );
       return;
     }
     setSaving(true);
@@ -146,11 +166,15 @@ function EditModal({
   const previewInbox = email.trim()
     ? email.trim()
     : website.trim()
-    ? `careers@${domainOf(website.trim()) ?? "…"}`
-    : "—";
+      ? `careers@${domainOf(website.trim()) ?? "…"}`
+      : "—";
 
   return (
-    <Modal visible={company !== null} animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={company !== null}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <View style={s.container}>
         <View style={s.modalHeader}>
           <TouchableOpacity onPress={onClose} hitSlop={16}>
@@ -161,12 +185,15 @@ function EditModal({
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={s.form} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={s.form}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={s.label}>Company website / domain</Text>
           <TextInput
             style={s.input}
             placeholder="https://stripe.com"
-            placeholderTextColor={colors.tertiary}
+            placeholderTextColor={theme.secondaryText}
             value={website}
             onChangeText={setWebsite}
             autoCapitalize="none"
@@ -178,7 +205,7 @@ function EditModal({
           <TextInput
             style={s.input}
             placeholder="talent@stripe.com"
-            placeholderTextColor={colors.tertiary}
+            placeholderTextColor={theme.secondaryText}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -218,44 +245,119 @@ function normalizeUrl(input: string): string {
   return /^https?:\/\//.test(input) ? input : `https://${input}`;
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background },
-  header: { ...font.largeTitle, color: colors.label, paddingHorizontal: space.xl, paddingTop: space.lg },
-  sub: { ...font.footnote, color: colors.secondary, paddingHorizontal: space.xl, paddingTop: space.xs, paddingBottom: space.md, lineHeight: 18 },
-  mono: { fontFamily: "Courier", color: colors.label },
-  list: { paddingHorizontal: space.lg, paddingBottom: space.xxl },
-  card: {
-    backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, marginBottom: space.md,
-    ...shadow.card,
-  },
-  cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: space.sm },
-  cardName: { ...font.headline, color: colors.label, flex: 1 },
-  badge: { paddingHorizontal: space.md, paddingVertical: 4, borderRadius: radius.pill },
-  badgeOk: { backgroundColor: colors.successSoft },
-  badgeMissing: { backgroundColor: colors.dangerSoft },
-  badgeText: { ...font.caption, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
-  badgeTextOk: { color: colors.success },
-  badgeTextMissing: { color: colors.danger },
-  cardInbox: { ...font.subhead, color: colors.accent, marginTop: space.sm },
-  cardWebsite: { ...font.caption, color: colors.tertiary, marginTop: 2 },
-  modalHeader: {
-    flexDirection: "row", alignItems: "center", gap: space.md,
-    paddingHorizontal: space.xl, paddingTop: 56, paddingBottom: space.md, backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator,
-  },
-  modalTitle: { ...font.title3, color: colors.label, flex: 1 },
-  close: { ...font.body, color: colors.accent, fontWeight: "600" },
-  form: { padding: space.lg, gap: space.sm },
-  label: { ...font.footnote, fontWeight: "600", color: colors.secondary, marginTop: space.md, marginBottom: space.xs },
-  input: {
-    backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.separator,
-    borderRadius: radius.sm, padding: space.md, fontSize: 15, color: colors.label,
-  },
-  previewBox: { backgroundColor: colors.accentSoft, borderRadius: radius.md, padding: space.lg, marginTop: space.lg },
-  previewLabel: { ...font.caption, color: colors.accent, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
-  previewValue: { ...font.headline, color: "#0856C9", marginTop: space.xs },
-  saveBtn: { backgroundColor: colors.accent, paddingVertical: 15, borderRadius: radius.md, alignItems: "center", marginTop: space.xl },
-  saveBtnDisabled: { opacity: 0.5 },
-  saveBtnText: { ...font.headline, color: colors.inverse },
-});
+const createStyles = (theme: any) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: theme.background,
+    },
+    header: {
+      ...font.largeTitle,
+      color: theme.text,
+      paddingHorizontal: space.xl,
+      paddingTop: space.lg,
+    },
+    sub: {
+      ...font.footnote,
+      color: theme.secondaryText,
+      paddingHorizontal: space.xl,
+      paddingTop: space.xs,
+      paddingBottom: space.md,
+      lineHeight: 18,
+    },
+    mono: { fontFamily: "Courier", color: theme.text },
+    list: { paddingHorizontal: space.lg, paddingBottom: space.xxl },
+    card: {
+      backgroundColor: theme.card,
+      borderRadius: radius.md,
+      padding: space.lg,
+      marginBottom: space.md,
+      ...shadow.card,
+    },
+    cardTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: space.sm,
+    },
+    cardName: { ...font.headline, color: theme.text, flex: 1 },
+    badge: {
+      paddingHorizontal: space.md,
+      paddingVertical: 4,
+      borderRadius: radius.pill,
+    },
+    badgeOk: { backgroundColor: theme.mode === "dark" ? "#16331D" : "#DCFCE7" },
+    badgeMissing: {
+      backgroundColor: theme.mode === "dark" ? "#3B1212" : "#FEE2E2",
+    },
+    badgeText: {
+      ...font.caption,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    badgeTextOk: { color: "#22C55E" },
+    badgeTextMissing: { color: theme.danger },
+    cardInbox: { ...font.subhead, color: theme.primary, marginTop: space.sm },
+    cardWebsite: { ...font.caption, color: theme.secondaryText, marginTop: 2 },
+    modalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: space.md,
+      paddingHorizontal: space.xl,
+      paddingTop: 56,
+      paddingBottom: space.md,
+      backgroundColor: theme.card,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+    },
+    modalTitle: { ...font.title3, color: theme.text, flex: 1 },
+    close: { ...font.body, color: theme.primary, fontWeight: "600" },
+    form: { padding: space.lg, gap: space.sm },
+    label: {
+      ...font.footnote,
+      fontWeight: "600",
+      color: theme.secondaryText,
+      marginTop: space.md,
+      marginBottom: space.xs,
+    },
+    input: {
+      backgroundColor: theme.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: radius.sm,
+      padding: space.md,
+      fontSize: 15,
+      color: theme.text,
+    },
+    previewBox: {
+      backgroundColor: theme.mode === "dark" ? "#172554" : "#DBEAFE",
+      borderRadius: radius.md,
+      padding: space.lg,
+      marginTop: space.lg,
+    },
+    previewLabel: {
+      ...font.caption,
+      color: theme.primary,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    previewValue: {
+      ...font.headline,
+      color: theme.mode === "dark" ? "#93C5FD" : "#0856C9",
+      marginTop: space.xs,
+    },
+    saveBtn: {
+      backgroundColor: theme.primary,
+      paddingVertical: 15,
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginTop: space.xl,
+    },
+    saveBtnDisabled: { opacity: 0.5 },
+    saveBtnText: { ...font.headline, color: "#fff" },
+  });

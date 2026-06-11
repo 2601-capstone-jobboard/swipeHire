@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet } from "react-native";
-import { colors } from "../theme";
+import { useTheme } from "../context/ThemeContext";
 
 // Company avatar: shows the real logo when we have one, otherwise a clean
 // monogram circle with a deterministic color derived from the company name.
@@ -17,7 +17,8 @@ const PALETTE = [
 
 function colorFor(name: string): string {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  for (let i = 0; i < name.length; i++)
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
   return PALETTE[Math.abs(hash) % PALETTE.length];
 }
 
@@ -30,13 +31,19 @@ export function Avatar({
   logoUrl?: string | null;
   size?: number;
 }) {
+  const { theme } = useTheme();
   const radius = size * 0.28;
 
   if (logoUrl) {
     return (
       <Image
         source={{ uri: logoUrl }}
-        style={[s.logo, { width: size, height: size, borderRadius: radius }]}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius,
+          backgroundColor: theme.card,
+        }}
       />
     );
   }
@@ -45,7 +52,12 @@ export function Avatar({
     <View
       style={[
         s.monogram,
-        { width: size, height: size, borderRadius: radius, backgroundColor: colorFor(name) },
+        {
+          width: size,
+          height: size,
+          borderRadius: radius,
+          backgroundColor: colorFor(name),
+        },
       ]}
     >
       <Text style={[s.initial, { fontSize: size * 0.42 }]}>
@@ -56,7 +68,13 @@ export function Avatar({
 }
 
 const s = StyleSheet.create({
-  logo: { backgroundColor: colors.surface },
-  monogram: { alignItems: "center", justifyContent: "center" },
-  initial: { color: "#fff", fontWeight: "700" },
+  monogram: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  initial: {
+    color: "#fff",
+    fontWeight: "700",
+  },
 });

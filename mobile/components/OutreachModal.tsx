@@ -11,7 +11,8 @@ import {
   Alert,
 } from "react-native";
 import { api, type OutreachDraft } from "../lib/api";
-import { colors, space, radius, font, shadow } from "../theme";
+import { space, radius, font, shadow } from "../theme";
+import { useTheme } from "../context/ThemeContext";
 
 export function OutreachModal({
   jobId,
@@ -22,6 +23,8 @@ export function OutreachModal({
   visible: boolean;
   onClose: () => void;
 }) {
+  const { theme } = useTheme();
+  const s = createStyles(theme);
   const [draft, setDraft] = useState<OutreachDraft | null>(null);
   const [loading, setLoading] = useState(false);
   const [subject, setSubject] = useState("");
@@ -55,7 +58,10 @@ export function OutreachModal({
         Alert.alert("Sent", "Your message is on its way to the recruiter.");
         onClose();
       } else {
-        Alert.alert("Saved as draft", res.note ?? res.error ?? "Sending isn't set up yet.");
+        Alert.alert(
+          "Saved as draft",
+          res.note ?? res.error ?? "Sending isn't set up yet.",
+        );
       }
     } catch (err: any) {
       Alert.alert("Couldn't send", err.message);
@@ -73,15 +79,20 @@ export function OutreachModal({
           <TouchableOpacity onPress={onClose} hitSlop={16} style={s.closeBtn}>
             <Text style={s.close}>✕ Cancel</Text>
           </TouchableOpacity>
-          <Text style={s.header} numberOfLines={1}>Reach out</Text>
+          <Text style={s.header} numberOfLines={1}>
+            Reach out
+          </Text>
         </View>
 
         {loading ? (
           <View style={s.center}>
-            <ActivityIndicator size="large" color={colors.accent} />
+            <ActivityIndicator size="large" color={theme.primary} />
           </View>
         ) : (
-          <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={s.scroll}
+            keyboardShouldPersistTaps="handled"
+          >
             {draft && (
               <View style={s.toCard}>
                 <Text style={s.toLabel}>To</Text>
@@ -94,15 +105,15 @@ export function OutreachModal({
 
             {noRecruiter && (
               <Text style={s.warn}>
-                This company doesn't have a recruiter contact yet, so this message can't be
-                sent. You can still draft and copy it.
+                This company doesn't have a recruiter contact yet, so this
+                message can't be sent. You can still draft and copy it.
               </Text>
             )}
 
             {draft && !draft.sendingConfigured && !noRecruiter && (
               <Text style={s.warn}>
-                Email sending isn't configured on the server — your message will be saved as a
-                draft.
+                Email sending isn't configured on the server — your message will
+                be saved as a draft.
               </Text>
             )}
 
@@ -129,7 +140,11 @@ export function OutreachModal({
               disabled={sending || Boolean(noRecruiter)}
             >
               <Text style={s.sendBtnText}>
-                {sending ? "Sending…" : draft?.canSend ? "Send message" : "Save draft"}
+                {sending
+                  ? "Sending…"
+                  : draft?.canSend
+                    ? "Send message"
+                    : "Save draft"}
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -139,42 +154,74 @@ export function OutreachModal({
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingHorizontal: space.xl,
-    paddingTop: 56,
-    paddingBottom: space.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
-  header: { ...font.title3, flex: 1, color: colors.label },
-  closeBtn: { paddingVertical: 6, paddingRight: 6 },
-  close: { ...font.body, color: colors.accent, fontWeight: "600" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  scroll: { padding: space.lg, gap: space.sm },
-  toCard: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, marginBottom: space.xs, ...shadow.card },
-  toLabel: { ...font.caption, color: colors.tertiary, textTransform: "uppercase", fontWeight: "700", letterSpacing: 0.4 },
-  toValue: { ...font.callout, color: colors.label, marginTop: 2 },
-  warn: {
-    backgroundColor: colors.warningSoft,
-    color: "#9A6200",
-    padding: space.md,
-    borderRadius: radius.sm,
-    ...font.footnote,
-    lineHeight: 19,
-  },
-  label: { ...font.footnote, fontWeight: "600", color: colors.secondary, marginTop: space.md, marginBottom: space.xs },
-  input: {
-    backgroundColor: colors.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.separator,
-    borderRadius: radius.sm, padding: space.md, fontSize: 15, color: colors.label,
-  },
-  inputMultiline: { minHeight: 220, textAlignVertical: "top" },
-  sendBtn: { backgroundColor: colors.accent, paddingVertical: 15, borderRadius: radius.md, alignItems: "center", marginTop: space.lg },
-  sendBtnText: { ...font.headline, color: colors.inverse },
-  btnDisabled: { opacity: 0.45 },
-});
+const createStyles = (theme: any) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: space.md,
+      paddingHorizontal: space.xl,
+      paddingTop: 56,
+      paddingBottom: space.md,
+      backgroundColor: theme.card,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
+    },
+    header: { ...font.title3, flex: 1, color: theme.text },
+    closeBtn: { paddingVertical: 6, paddingRight: 6 },
+    close: { ...font.body, color: theme.primary, fontWeight: "600" },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    scroll: { padding: space.lg, gap: space.sm },
+    toCard: {
+      backgroundColor: theme.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: radius.md,
+      padding: space.lg,
+      marginBottom: space.xs,
+      ...shadow.card,
+    },
+    toLabel: {
+      ...font.caption,
+      color: theme.secondaryText,
+      textTransform: "uppercase",
+      fontWeight: "700",
+      letterSpacing: 0.4,
+    },
+    toValue: { ...font.callout, color: theme.text, marginTop: 2 },
+    warn: {
+      backgroundColor: theme.mode === "dark" ? "#3D2C0A" : "#FEF3C7",
+      color: theme.mode === "dark" ? "#FCD34D" : "#9A6200",
+      padding: space.md,
+      borderRadius: radius.sm,
+      ...font.footnote,
+      lineHeight: 19,
+    },
+    label: {
+      ...font.footnote,
+      fontWeight: "600",
+      color: theme.secondaryText,
+      marginTop: space.md,
+      marginBottom: space.xs,
+    },
+    input: {
+      backgroundColor: theme.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
+      borderRadius: radius.sm,
+      padding: space.md,
+      fontSize: 15,
+      color: theme.text,
+    },
+    inputMultiline: { minHeight: 220, textAlignVertical: "top" },
+    sendBtn: {
+      backgroundColor: theme.primary,
+      paddingVertical: 15,
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginTop: space.lg,
+    },
+    sendBtnText: { ...font.headline, color: "#fff" },
+    btnDisabled: { opacity: 0.45 },
+  });

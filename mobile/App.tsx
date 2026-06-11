@@ -26,6 +26,7 @@ import { SavedScreen } from "./screens/SavedScreen";
 import { AdminScreen } from "./screens/AdminScreen";
 import { SettingsModal } from "./components/SettingsModal";
 import { colors, space, radius, font } from "./theme";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const Tab = createBottomTabNavigator();
 
@@ -34,11 +35,13 @@ const TAB_ICONS: Record<string, string> = {
   Saved: "🔖",
   Admin: "⚙️",
 };
-
+//added theme provider
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -110,56 +113,66 @@ function AppContent() {
   if (user) {
     return (
       <>
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={({ route }) => ({
-            tabBarActiveTintColor: colors.accent,
-            tabBarInactiveTintColor: colors.tertiary,
-            tabBarStyle: {
-              backgroundColor: colors.surface,
-              borderTopColor: colors.separator,
-              paddingTop: 6,
-            },
-            tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
-            tabBarIcon: ({ focused }) => (
-              <Text style={{ fontSize: 17, opacity: focused ? 1 : 0.35 }}>
-                {TAB_ICONS[route.name] ?? "•"}
-              </Text>
-            ),
-            headerStyle: { backgroundColor: colors.surface, shadowColor: "transparent" },
-            headerTitleStyle: { ...font.title3, color: colors.label },
-            headerShadowVisible: false,
-          })}
-        >
-          <Tab.Screen
-            name="Discover"
-            options={{
-              headerRight: () => (
-                <Text style={s.headerLogout} onPress={() => setSettingsOpen(true)}>
-                  Account
+        <NavigationContainer>
+          <Tab.Navigator
+            screenOptions={({ route }) => ({
+              tabBarActiveTintColor: colors.accent,
+              tabBarInactiveTintColor: colors.tertiary,
+              tabBarStyle: {
+                backgroundColor: colors.surface,
+                borderTopColor: colors.separator,
+                paddingTop: 6,
+              },
+              tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+              tabBarIcon: ({ focused }) => (
+                <Text style={{ fontSize: 17, opacity: focused ? 1 : 0.35 }}>
+                  {TAB_ICONS[route.name] ?? "•"}
                 </Text>
               ),
-            }}
+              headerStyle: {
+                backgroundColor: colors.surface,
+                shadowColor: "transparent",
+              },
+              headerTitleStyle: { ...font.title3, color: colors.label },
+              headerShadowVisible: false,
+            })}
           >
-            {() => <DiscoverScreen user={user} />}
-          </Tab.Screen>
-          <Tab.Screen name="Saved" component={SavedScreen} options={{ headerShown: false }} />
-          {user.role === "admin" && (
             <Tab.Screen
-              name="Admin"
-              component={AdminScreen}
+              name="Discover"
+              options={{
+                headerRight: () => (
+                  <Text
+                    style={s.headerLogout}
+                    onPress={() => setSettingsOpen(true)}
+                  >
+                    Account
+                  </Text>
+                ),
+              }}
+            >
+              {() => <DiscoverScreen user={user} />}
+            </Tab.Screen>
+            <Tab.Screen
+              name="Saved"
+              component={SavedScreen}
               options={{ headerShown: false }}
             />
-          )}
-        </Tab.Navigator>
-      </NavigationContainer>
-      <SettingsModal
-        visible={settingsOpen}
-        email={user.email}
-        onClose={() => setSettingsOpen(false)}
-        onEmailChanged={(u) => setUser(u)}
-        onSignOut={handleLogout}
-      />
+            {user.role === "admin" && (
+              <Tab.Screen
+                name="Admin"
+                component={AdminScreen}
+                options={{ headerShown: false }}
+              />
+            )}
+          </Tab.Navigator>
+        </NavigationContainer>
+        <SettingsModal
+          visible={settingsOpen}
+          email={user.email}
+          onClose={() => setSettingsOpen(false)}
+          onEmailChanged={(u) => setUser(u)}
+          onSignOut={handleLogout}
+        />
       </>
     );
   }
@@ -199,7 +212,11 @@ function AppContent() {
           />
         </View>
 
-        <TouchableOpacity style={s.primaryBtn} onPress={handleSubmit} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={s.primaryBtn}
+          onPress={handleSubmit}
+          activeOpacity={0.85}
+        >
           <Text style={s.primaryBtnText}>
             {isRegister ? "Create account" : "Log in"}
           </Text>
@@ -211,7 +228,9 @@ function AppContent() {
         >
           <Text style={s.linkText}>
             {isRegister ? "Have an account? " : "New here? "}
-            <Text style={s.linkTextStrong}>{isRegister ? "Log in" : "Sign up"}</Text>
+            <Text style={s.linkTextStrong}>
+              {isRegister ? "Log in" : "Sign up"}
+            </Text>
           </Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
@@ -220,14 +239,33 @@ function AppContent() {
 }
 
 const s = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background },
-  headerLogout: { ...font.subhead, color: colors.accent, fontWeight: "600", marginRight: space.lg },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.background,
+  },
+  headerLogout: {
+    ...font.subhead,
+    color: colors.accent,
+    fontWeight: "600",
+    marginRight: space.lg,
+  },
 
   authContainer: { flex: 1, backgroundColor: colors.background },
-  authInner: { flex: 1, justifyContent: "center", paddingHorizontal: space.xxl, gap: space.xl },
+  authInner: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: space.xxl,
+    gap: space.xl,
+  },
   brand: { alignItems: "center", marginBottom: space.sm },
   brandMark: { ...font.largeTitle, color: colors.label },
-  brandTagline: { ...font.subhead, color: colors.secondary, marginTop: space.xs },
+  brandTagline: {
+    ...font.subhead,
+    color: colors.secondary,
+    marginTop: space.xs,
+  },
 
   formCard: {
     backgroundColor: colors.surface,
@@ -236,8 +274,17 @@ const s = StyleSheet.create({
     borderColor: colors.separator,
     overflow: "hidden",
   },
-  input: { ...font.body, color: colors.label, paddingHorizontal: space.lg, paddingVertical: 15 },
-  inputDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.separator, marginLeft: space.lg },
+  input: {
+    ...font.body,
+    color: colors.label,
+    paddingHorizontal: space.lg,
+    paddingVertical: 15,
+  },
+  inputDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
+    marginLeft: space.lg,
+  },
 
   primaryBtn: {
     backgroundColor: colors.accent,

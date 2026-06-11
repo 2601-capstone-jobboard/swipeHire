@@ -78,3 +78,24 @@ export const shadow = {
     elevation: 5,
   },
 } as const;
+
+// light mode
+export const lightTheme = {
+  background: "#FFFFFF",
+  card: "#F8F8F8",
+  text: "#111111",
+  secondaryText: "#666666",
+  border: "#E5E5E5",
+  primary: "#2563EB",
+  danger: "#EF4444",
+};
+// dark mode
+export const darkTheme = {
+  background: "#121212",
+  card: "#1E1E1E",
+  text: "#FFFFFF",
+  secondaryText: "#AAAAAA",
+  border: "#2A2A2A",
+  primary: "#3B82F6",
+  danger: "#F87171",
+};
