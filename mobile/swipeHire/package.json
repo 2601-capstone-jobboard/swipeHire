@@ -1,0 +1,16 @@
+{
+  "name": "swipehire",
+  "private": true,
+  "version": "0.0.1",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @swipehire/api dev",
+    "dev:worker": "pnpm --filter @swipehire/worker dev",
+    "dev:mobile": "pnpm --filter @swipehire/mobile start",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
